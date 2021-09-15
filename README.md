@@ -25,6 +25,9 @@
 * First install: <b>```cargo install cargo-deb```</b>
 * Generate the debian package: <b>```cargo deb -v```</b>
 
+### Crate:
+[https://crates.io/crates/prometheus-linux-nfsdv4-exporter](https://crates.io/crates/prometheus-linux-nfsdv4-exporter)
+
 ### Contributing:
 <a href="https://github.com/Gandi/prometheus-linux-nfsdv4-exporter/graphs/contributors">
   <img src="https://contributors-img.web.app/image?repo=Gandi/prometheus-linux-nfsdv4-exporter" />
