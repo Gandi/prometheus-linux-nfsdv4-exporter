@@ -1,0 +1,20 @@
+[package]
+name = "prometheus-linux-nfsdv4-exporter"
+version = "1.0.1"
+edition = "2018"
+license = "BSD-2-Clause"
+description = "prometheus nfsv4 exporter"
+readme = "README.md"
+keywords = ["nfs", "storage", "prometheus"]
+categories = ["command-line-utilities"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = {version = "2.33.3", features = ["yaml"] }
+tokio = { version = "0.2", features = ["macros", "rt-threaded", "time"] }
+warp = "0.2"
+prometheus = {version = "0.9", features = ["process"] }
+lazy_static = "1.4"
+semver = "1.0.4"
+nix = "0.22.1"

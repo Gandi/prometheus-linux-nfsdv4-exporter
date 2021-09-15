@@ -1,0 +1,12 @@
+[Unit]
+Description=Prometheus NFSv4 exporter
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/prometheus-linux-nfsdv4-exporter
+
+[Install]
+WantedBy=multi-user.target
+Alias=prometheus-linux-nfsdv4-exporter.service
