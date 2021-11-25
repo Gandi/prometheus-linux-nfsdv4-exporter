@@ -17,6 +17,7 @@
 * <b>nfsv4_op_lock_per_client Number of lock operations per NFSv4 client</b>
 * <b>nfsv4_op_open_per_client Number of open operations per NFSv4 client</b>
 * <b>number_of_nfsv4_clients Number of NFSv4 clients</b>
+* <b>nfsv4_exports_total Number of NFSv4 exports</b>
  
 ### Build the project:
 * Release: <b>```cargo build --release```</b>
