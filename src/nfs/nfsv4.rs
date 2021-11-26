@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-use crate::utils::helper::{path_exists, PROC_NFSDV4};
+use crate::utils::helper::{path_exists, PROC_NFSDV4, VAR_NFSDV4};
 
 use std::fs::read_dir;
 use std::fs::File;
@@ -56,6 +56,19 @@ pub fn number_of_clients() -> i64 {
     if path_exists(&_proc_nfsdv4) {
         let paths = read_dir(&_proc_nfsdv4).unwrap();
         return paths.count() as i64;
+    }
+    0
+}
+
+pub fn number_of_exports() -> i64 {
+    let etab = VAR_NFSDV4.to_owned() + "/etab";
+    if path_exists(&etab) {
+        let open_etab = File::open(etab).expect("file not found");
+        let reader = BufReader::new(open_etab);
+        return reader
+            .lines()
+            .filter(|x| !x.as_ref().unwrap_or(&String::from("#")).starts_with("#"))
+            .count() as i64;
     }
     0
 }

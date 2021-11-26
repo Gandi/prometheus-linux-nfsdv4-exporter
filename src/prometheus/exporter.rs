@@ -37,13 +37,18 @@ use std::result::Result;
 use warp::{Filter, Rejection, Reply};
 
 use crate::nfs::nfs_generic::rpc_nfsd_metrics;
-use crate::nfs::nfsv4::{clients_information, number_of_clients};
+use crate::nfs::nfsv4::{clients_information, number_of_clients, number_of_exports};
 
 lazy_static! {
     pub static ref REGISTRY: Registry = Registry::new();
     // Number of clients connected
     pub static ref NUMBER_OF_NFSV4_CLIENTS: IntGauge =
         IntGauge::new("number_of_nfsv4_clients", "Number of NFSv4 clients")
+            .expect("metric can be created");
+
+    // Number of exports
+    pub static ref NUMBER_OF_NFSV4_EXPORTS: IntGauge =
+        IntGauge::new("nfsv4_exports_total", "Number of NFSv4 exports")
             .expect("metric can be created");
 
     // Number of FS OPS per client
@@ -102,6 +107,8 @@ lazy_static! {
 fn register_metrics() {
     REGISTRY.register(Box::new(NUMBER_OF_NFSV4_CLIENTS.clone()))
         .expect("collector can be registered");
+    REGISTRY.register(Box::new(NUMBER_OF_NFSV4_EXPORTS.clone()))
+        .expect("collector can be registered");
     REGISTRY.register(Box::new(OPEN_PER_NFSV4_CLIENT.clone()))
         .expect("collector can be registered");
     REGISTRY.register(Box::new(LOCK_PER_NFSV4_CLIENT.clone()))
@@ -142,6 +149,10 @@ async fn metrics_handler() -> Result<impl Reply, Rejection> {
     // Number of clients connected.
     let number_of_clients = number_of_clients();
     NUMBER_OF_NFSV4_CLIENTS.set(number_of_clients);
+
+    // Number of exports.
+    let number_of_exports = number_of_exports();
+    NUMBER_OF_NFSV4_EXPORTS.set(number_of_exports);
 
     // Number of NFSv4 ops per client.
     let ops_per_client = clients_information();

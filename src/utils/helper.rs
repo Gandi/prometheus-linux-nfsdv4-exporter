@@ -37,6 +37,7 @@ use std::path::Path;
 
 // NFS
 pub const PROC_NFSDV4: &'static str = "/proc/fs/nfsd/";
+pub const VAR_NFSDV4: &'static str = "/var/lib/nfs/";
 pub const PROC_RPC: &'static str = "/proc/net/rpc/";
 
 // Linux kernel
