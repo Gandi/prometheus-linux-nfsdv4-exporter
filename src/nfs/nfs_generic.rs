@@ -28,9 +28,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-use crate::utils::helper::{path_exists, PROC_RPC};
+use crate::utils::helper::{path_exists, PROC_RPC, OPEN_READONLY};
 
-use std::fs::File;
+use std::fs::OpenOptions;
+use std::os::unix::fs::OpenOptionsExt;
 use std::io::prelude::*;
 use std::io::BufReader;
 
@@ -135,7 +136,7 @@ pub fn rpc_nfsd_metrics() -> NfsStats {
     _proc_rpc_nfsd.push_str("nfsd");
 
     if path_exists(&_proc_rpc_nfsd) {
-        let open_nfsd = File::open(_proc_rpc_nfsd).expect("file not found");
+        let open_nfsd = OpenOptions::new().custom_flags(OPEN_READONLY).read(true).open(_proc_rpc_nfsd).expect("file not found");
         let reader = BufReader::new(open_nfsd);
 
         for line in reader.lines() {

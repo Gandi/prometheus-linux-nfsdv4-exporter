@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+extern crate libc;
 extern crate nix;
 extern crate semver;
 use nix::sys::utsname::*;
@@ -42,6 +42,14 @@ pub const PROC_RPC: &'static str = "/proc/net/rpc/";
 
 // Linux kernel
 const LINUX_MINIMAL_VERSION: &'static str = "5.3.0";
+
+// Open ReadOnly Unix mode
+pub const OPEN_READONLY: i32 = libc::O_RDONLY | libc::O_NONBLOCK | libc::O_NDELAY | libc::O_NOATIME | libc::O_CLOEXEC;
+
+// Check variable type (used during development only)
+pub fn print_type_of<T>(_: &T) {
+    println!("{}", std::any::type_name::<T>())
+}
 
 #[inline]
 pub fn is_kernel_compatible() -> bool {

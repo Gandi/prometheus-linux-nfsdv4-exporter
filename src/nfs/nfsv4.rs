@@ -28,12 +28,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-use crate::utils::helper::{path_exists, PROC_NFSDV4, VAR_NFSDV4};
+use crate::utils::helper::{path_exists, PROC_NFSDV4, VAR_NFSDV4, OPEN_READONLY};
 
 use std::fs::read_dir;
-use std::fs::File;
+use std::fs::OpenOptions;
+use std::os::unix::fs::OpenOptionsExt;
 use std::io::prelude::*;
-use std::io::{BufReader};
+use std::io::BufReader;
 
 #[derive(Debug)]
 pub struct Nfsv4Client {
@@ -63,8 +64,9 @@ pub fn number_of_clients() -> i64 {
 pub fn number_of_exports() -> i64 {
     let etab = VAR_NFSDV4.to_owned() + "/etab";
     if path_exists(&etab) {
-        let open_etab = File::open(etab).expect("file not found");
+        let open_etab = OpenOptions::new().custom_flags(OPEN_READONLY).read(true).open(etab).expect("file not found");
         let reader = BufReader::new(open_etab);
+
         return reader
             .lines()
             .filter(|x| !x.as_ref().unwrap_or(&String::from("#")).starts_with("#"))
@@ -78,7 +80,7 @@ fn clients_ops_information(path: &str) -> Nfsv4ClientOps {
     let (mut t_open, mut t_lock, mut t_deleg, mut t_layout): (i64, i64, i64, i64) = (0, 0, 0, 0);
 
     if path_exists(&clt_states) {
-        let open_states = File::open(clt_states).expect("file not found");
+        let open_states = OpenOptions::new().custom_flags(OPEN_READONLY).read(true).open(clt_states).expect("file not found");
         let reader = BufReader::new(open_states);
 
         for line in reader.lines() {
@@ -117,7 +119,7 @@ pub fn clients_information() -> Vec<Nfsv4Client> {
             let mut address = String::new();
             let _path = path.unwrap().path();
             let info = _path.to_str().unwrap().to_owned() + "/info";
-            let open_info = File::open(info).expect("file not found");
+            let open_info = OpenOptions::new().custom_flags(OPEN_READONLY).read(true).open(info).expect("file not found");
             let reader = BufReader::new(open_info);
 
             for line in reader.lines() {
