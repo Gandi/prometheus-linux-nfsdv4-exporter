@@ -57,12 +57,11 @@ fn set_cpu_percent(percent: u64) {
 
     let cg_cpus: &cgroups_rs::cpu::CpuController = cg.controller_of().unwrap();
     let my_pid = std::process::id() as u64;
-    println!("My pid: {}", my_pid);
     let cgroup_setup = cg_cpus.add_task(&CgroupPid::from(my_pid));
 
     match cgroup_setup {
-        Ok(m) => println!("CGROUP CPU SET: {}%", percent),
-        _ => println!("CGROUP NOT SET")
+        Ok(m) => println!("CGROUP CPU SET: {}% for PID: {}", percent, my_pid),
+        _ => println!("CGROUP NOT SET for PID: {}", my_pid)
     };
 }
 
