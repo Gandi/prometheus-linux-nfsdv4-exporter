@@ -32,6 +32,9 @@
 #[macro_use]
 extern crate lazy_static;
 
+use cgroups_rs::*;
+use cgroups_rs::cgroup_builder::*;
+
 use clap::{App, Arg, SubCommand};
 
 mod nfs;
@@ -47,10 +50,31 @@ fn help() {
      println!("Use command with help option");
 }
 
+fn set_cpu_percent(percent: u64) {
+    let cg_nfsv4_exporter = cgroups_rs::hierarchies::auto();
+    let cg: Cgroup = CgroupBuilder::new("prometheus-nfsv4-exporter")
+        .cpu().shares(percent).done().build(cg_nfsv4_exporter);
+
+    let cg_cpus: &cgroups_rs::cpu::CpuController = cg.controller_of().unwrap();
+    let my_pid = std::process::id() as u64;
+    println!("My pid: {}", my_pid);
+    let cgroup_setup = cg_cpus.add_task(&CgroupPid::from(my_pid));
+
+    match cgroup_setup {
+        Ok(m) => println!("CGROUP CPU SET: {}%", percent),
+        _ => println!("CGROUP NOT SET")
+    };
+}
+
+
 fn main() {
     if !is_kernel_compatible() {
         std::process::exit(69);
     }
+
+    // set CGROUP CPU usage
+    // cgget -g cpu:prometheus-nfsv4-exporter
+    set_cpu_percent(10);
 
     let matches = App::new("prometheus-linux-nfsdv4-exporter")
         .version(VERSION)
