@@ -28,13 +28,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-use crate::utils::helper::{path_exists, PROC_NFSDV4, VAR_NFSDV4, OPEN_READONLY};
-
+use crate::utils::helper::{path_exists, wrapper_read, PROC_NFSDV4, VAR_NFSDV4};
 use std::fs::read_dir;
-use std::fs::OpenOptions;
-use std::os::unix::fs::OpenOptionsExt;
-use std::io::prelude::*;
-use std::io::BufReader;
 
 #[derive(Debug)]
 pub struct Nfsv4Client {
@@ -64,13 +59,8 @@ pub fn number_of_clients() -> i64 {
 pub fn number_of_exports() -> i64 {
     let etab = VAR_NFSDV4.to_owned() + "/etab";
     if path_exists(&etab) {
-        let open_etab = OpenOptions::new().custom_flags(OPEN_READONLY).read(true).open(etab).expect("file not found");
-        let reader = BufReader::new(open_etab);
-
-        return reader
-            .lines()
-            .filter(|x| !x.as_ref().unwrap_or(&String::from("#")).starts_with("#"))
-            .count() as i64;
+        let content = wrapper_read(etab);
+        return content.len() as i64;
     }
     0
 }
@@ -80,18 +70,16 @@ fn clients_ops_information(path: &str) -> Nfsv4ClientOps {
     let (mut t_open, mut t_lock, mut t_deleg, mut t_layout): (i64, i64, i64, i64) = (0, 0, 0, 0);
 
     if path_exists(&clt_states) {
-        let open_states = OpenOptions::new().custom_flags(OPEN_READONLY).read(true).open(clt_states).expect("file not found");
-        let reader = BufReader::new(open_states);
+        let content = wrapper_read(clt_states);
 
-        for line in reader.lines() {
-            let _line = line.unwrap().to_owned();
-            if _line.contains("type: open") {
+        for line in content.iter() {
+            if line.contains("type: open") {
                 t_open += 1;
-            } else if _line.contains("type: lock") {
+            } else if line.contains("type: lock") {
                 t_lock += 1;
-            } else if _line.contains("type: deleg") {
+            } else if line.contains("type: deleg") {
                 t_deleg += 1;
-            } else if _line.contains("type: layout") {
+            } else if line.contains("type: layout") {
                 t_layout += 1;
             }
         }
@@ -119,15 +107,15 @@ pub fn clients_information() -> Vec<Nfsv4Client> {
             let mut address = String::new();
             let _path = path.unwrap().path();
             let info = _path.to_str().unwrap().to_owned() + "/info";
-            let open_info = OpenOptions::new().custom_flags(OPEN_READONLY).read(true).open(info).expect("file not found");
-            let reader = BufReader::new(open_info);
 
-            for line in reader.lines() {
-                let mut line = line.unwrap();
+            let content = wrapper_read(info);
+
+            for line in content.iter() {
+                let mut line = line.to_owned();
                 if line.contains("clientid") {
                     clientid = line.replace("clientid:", "").trim().to_string();
                 }
-                if line.contains("address") {
+                if line.contains("address") && !line.contains("callback") {
                     line.retain(|x| !['\"'].contains(&x));
                     address = line.replace("address:", "").trim().to_string();
                 }
