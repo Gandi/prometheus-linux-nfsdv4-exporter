@@ -18,4 +18,3 @@ prometheus = {version = "0.9", features = ["process"] }
 lazy_static = "1.4"
 semver = "1.0.4"
 nix = "0.22.1"
-cgroups-rs = "0.2.9"
