@@ -27,13 +27,40 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 extern crate nix;
 extern crate semver;
 use nix::sys::utsname::*;
 use semver::Version;
 
 use std::path::Path;
+
+use std::fs::File;
+use std::io::Read;
+
+// Wrapper of file open and read to assure the file stays open as minimal as
+// possible.
+#[inline]
+pub fn wrapper_read<P>(filename: P) -> Vec<String> where P: AsRef<Path>,
+{
+    let mut content = String::new();
+    let mut return_content: Vec<String> = vec![];
+    let file = File::open(filename);
+
+    match file {
+        Ok(mut m) => {
+            m.read_to_string(&mut content).unwrap();
+            drop(m); // Enforce file to close
+            return_content = content.split('\n').filter(|&x| !x.is_empty()).map(|s| s.to_string()).collect();
+        },
+        Err(m) => println!("Could not open: {:?}", m),
+    };
+
+    // Enforce ownership to assure nothing is being hold from file
+    // .to_owned() makes redundant data clone and is unecessary, but
+    // I want make explicity we are cloning the content.
+    let _rc = return_content.to_owned();
+    _rc
+}
 
 // NFS
 pub const PROC_NFSDV4: &'static str = "/proc/fs/nfsd/";
@@ -42,6 +69,11 @@ pub const PROC_RPC: &'static str = "/proc/net/rpc/";
 
 // Linux kernel
 const LINUX_MINIMAL_VERSION: &'static str = "5.3.0";
+
+// Check variable type (used during development only)
+pub fn print_type_of<T>(_: &T) {
+    println!("{}", std::any::type_name::<T>())
+}
 
 #[inline]
 pub fn is_kernel_compatible() -> bool {
