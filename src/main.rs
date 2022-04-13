@@ -41,7 +41,7 @@ use crate::utils::helper::{is_kernel_compatible};
 mod prometheus;
 use crate::prometheus::exporter::{start_prometheus};
 
-const VERSION: &str = "1.0.1";
+const VERSION: &str = "1.1.4";
 
 fn help() {
      println!("Use command with help option");
@@ -74,6 +74,14 @@ fn main() {
                         .required(false)
                         .value_name("PORT")
                         .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("nfsv4opsclients")
+                        .help("Enable NFSv4 metrics operations per client (WARNING: can be CPU intensive)")
+                        .short("o")
+                        .long("nfsv4-ops-clients")
+                        .required(false)
+                        .takes_value(false),
                 ),
         )
         .get_matches();
