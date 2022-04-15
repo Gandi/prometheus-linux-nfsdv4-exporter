@@ -34,12 +34,23 @@ use prometheus::{
 };
 use std::net::SocketAddr;
 use std::result::Result;
+use std::sync::Mutex;
+
 use warp::{Filter, Rejection, Reply};
 
 use crate::nfs::nfs_generic::rpc_nfsd_metrics;
 use crate::nfs::nfsv4::{clients_information, number_of_clients, number_of_exports};
 
+// Enable or Disable metrics, disable by default nfsv4 ops per clients
+#[derive(Debug, Clone)]
+pub struct ExporterOptions {
+    nfsv4_ops_clients: bool,
+}
+
 lazy_static! {
+    // Export options
+    static ref EXPORTEROPTS: Mutex<ExporterOptions> = Mutex::new(ExporterOptions { nfsv4_ops_clients: false });
+
     pub static ref REGISTRY: Registry = Registry::new();
     // Number of clients connected
     pub static ref NUMBER_OF_NFSV4_CLIENTS: IntGauge =
@@ -68,7 +79,6 @@ lazy_static! {
         IntGaugeVec::new(Opts::new("nfsv4_op_layout_per_client", "Number of layout operations per NFSv4 client"),
         &["client"])
             .expect("metric can be created");
-
 
     // Cache
     pub static ref REPLY_CACHE_HITS: IntGauge =
@@ -145,6 +155,7 @@ async fn index_handler() -> Result<impl Reply, Rejection> {
 async fn metrics_handler() -> Result<impl Reply, Rejection> {
     use prometheus::Encoder;
     let encoder = prometheus::TextEncoder::new();
+    let opts = EXPORTEROPTS.try_lock().unwrap().clone();
 
     // Number of clients connected.
     let number_of_clients = number_of_clients();
@@ -155,16 +166,19 @@ async fn metrics_handler() -> Result<impl Reply, Rejection> {
     NUMBER_OF_NFSV4_EXPORTS.set(number_of_exports);
 
     // Number of NFSv4 ops per client.
+    // It is disabled by default as it can be CPU intensive
+    if opts.nfsv4_ops_clients {
     let ops_per_client = clients_information();
-    for client in ops_per_client.iter() {
-        OPEN_PER_NFSV4_CLIENT.with_label_values(&[&client.address])
-            .set(client.ops_count.t_open);
-        LOCK_PER_NFSV4_CLIENT.with_label_values(&[&client.address])
-            .set(client.ops_count.t_lock);
-        DELEG_PER_NFSV4_CLIENT.with_label_values(&[&client.address])
-            .set(client.ops_count.t_deleg);
-        LAYOUT_PER_NFSV4_CLIENT.with_label_values(&[&client.address])
-            .set(client.ops_count.t_layout);
+        for client in ops_per_client.iter() {
+            OPEN_PER_NFSV4_CLIENT.with_label_values(&[&client.address])
+                .set(client.ops_count.t_open);
+            LOCK_PER_NFSV4_CLIENT.with_label_values(&[&client.address])
+                .set(client.ops_count.t_lock);
+            DELEG_PER_NFSV4_CLIENT.with_label_values(&[&client.address])
+                .set(client.ops_count.t_deleg);
+            LAYOUT_PER_NFSV4_CLIENT.with_label_values(&[&client.address])
+                .set(client.ops_count.t_layout);
+        }
     }
 
     // NFS Cache information.
@@ -218,6 +232,13 @@ async fn metrics_handler() -> Result<impl Reply, Rejection> {
 pub async fn start_prometheus(options: &ArgMatches) -> Result<(), ()> {
     let mut default_port = "9944";
     let mut default_address = "0.0.0.0";
+
+    let expopts: ExporterOptions = ExporterOptions {
+        nfsv4_ops_clients: options.is_present("nfsv4opsclients"),
+     };
+
+    // XXX: It is safe to use unwrap() here
+    EXPORTEROPTS.try_lock().unwrap().clone_from(&expopts);
 
     if let Some(port) = options.value_of("port") {
         default_port = port;
