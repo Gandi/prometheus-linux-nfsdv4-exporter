@@ -1,7 +1,7 @@
 [package]
 name = "prometheus-linux-nfsdv4-exporter"
 version = "1.1.4"
-edition = "2018"
+edition = "2021"
 license = "BSD-2-Clause"
 description = "prometheus nfsv4 exporter"
 readme = "README.md"
